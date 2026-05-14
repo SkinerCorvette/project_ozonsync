@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoPro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=4">
+</head>
+<body>
+<header class="site-header">
+    <div class="header-shell">
+        <div class="header-brand-block">
+            <div class="brand-mark">AP</div>
+            <div class="brand-copy">
+                <h1>AutoPro</h1>
+                <span>Каталог, заказы и синхронизация Ozon</span>
+            </div>
+        </div>
+
+        <nav id="shopNav" class="shop-nav hidden">
+            <button id="navDashboardBtn" class="shop-nav-btn" type="button">Аналитика</button>
+            <button id="navCatalogBtn" class="shop-nav-btn" type="button">Каталог</button>
+            <button id="navCartBtn" class="shop-nav-btn" type="button">Корзина <span id="cartBadge" class="cart-badge hidden">0</span></button>
+            <button id="navMyOrdersBtn" class="shop-nav-btn" type="button">Мои заказы</button>
+            <button id="navSupportBtn" class="shop-nav-btn" type="button">Поддержка <span id="supportBadge" class="cart-badge hidden">0</span></button>
+            <button id="navAdminOrdersBtn" class="shop-nav-btn" type="button">Заказы</button>
+            <button id="navAdminUsersBtn" class="shop-nav-btn" type="button">Пользователи</button>
+            <button id="navAdminSupportBtn" class="shop-nav-btn" type="button">Обращения <span id="adminSupportBadge" class="cart-badge hidden">0</span></button>
+            <button id="navActivityBtn" class="shop-nav-btn" type="button">Журнал действий</button>
+            <button id="navCatalogControlBtn" class="shop-nav-btn" type="button">Контроль каталога</button>
+        </nav>
+
+        <div id="authStatus" class="hidden header-user-panel">
+            <span id="welcomeMessage"></span>
+            <button id="logoutBtn" class="btn-danger">Выйти</button>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div id="toastViewport" class="toast-viewport" aria-live="polite" aria-atomic="true"></div>
+    <button id="supportHintBtn" class="support-help-link hidden" type="button">Возникла проблема? Обратитесь за помощью</button>
+
+    <div id="authForms" class="auth-shell card">
+        <div class="auth-visual">
+            <div class="auth-glow"></div>
+            <p class="eyebrow">Платформа управления каталогом</p>
+            <h2>Интернет-магазин автокомплектующих с синхронизацией Ozon Seller API</h2>
+            <p class="auth-description">Управляйте каталогом, синхронизируйте товары, принимайте заказы и контролируйте состояние ассортимента в единой системе.</p>
+            <div class="auth-features">
+                <div class="auth-feature"><span>01</span><strong>Синхронизация каталога</strong></div>
+                <div class="auth-feature"><span>02</span><strong>Заказы и обработка заявок</strong></div>
+                <div class="auth-feature"><span>03</span><strong>Аналитика и контроль каталога</strong></div>
+            </div>
+        </div>
+
+        <div class="auth-panel">
+            <div class="auth-panel-head">
+                <p class="eyebrow">Добро пожаловать</p>
+                <h2 id="authPanelTitle">Авторизация</h2>
+                <p class="auth-panel-subtitle">Войдите в систему, чтобы продолжить работу с каталогом и заказами.</p>
+            </div>
+
+            <form id="loginForm" class="auth-form">
+                <div class="form-field">
+                    <label for="loginUsername">Имя пользователя</label>
+                    <input type="text" id="loginUsername" placeholder="Введите логин" required>
+                </div>
+                <div class="form-field">
+                    <label for="loginPassword">Пароль</label>
+                    <input type="password" id="loginPassword" placeholder="Введите пароль" required>
+                </div>
+                <label class="auth-checkbox">
+                    <input type="checkbox" id="toggleLoginPassword">
+                    <span>Показать пароль</span>
+                </label>
+                <button type="submit">Войти в систему</button>
+                <p class="error" id="loginError" style="display:none;"></p>
+                <p class="auth-switch">Ещё нет аккаунта? <a href="#" id="showRegisterLink">Зарегистрироваться</a></p>
+            </form>
+
+            <form id="registerForm" class="auth-form hidden">
+                <div class="form-field">
+                    <label for="registerUsername">Имя пользователя</label>
+                    <input type="text" id="registerUsername" placeholder="Создайте логин" required>
+                </div>
+                <div class="form-field">
+                    <label for="registerPassword">Пароль</label>
+                    <input type="password" id="registerPassword" placeholder="Создайте пароль" required>
+                </div>
+                <div class="form-field">
+                    <label for="confirmPassword">Подтверждение пароля</label>
+                    <input type="password" id="confirmPassword" placeholder="Повторите пароль" required>
+                </div>
+                <button type="submit">Создать аккаунт</button>
+                <p class="error" id="registerError" style="display:none;"></p>
+                <p class="auth-switch">Уже есть аккаунт? <a href="#" id="showLoginLink">Войти</a></p>
+            </form>
+        </div>
+    </div>
+
+    
+
+    <section id="mainDashboardSection" class="dashboard-main hidden">
+        <div class="dashboard-hero">
+            <div>
+                <p class="eyebrow">Панель управления</p>
+                <h2>Интернет-магазин автокомплектующих</h2>
+                <p>Каталог наполняется через Ozon Seller API, а заказы обрабатываются локально администратором.</p>
+            </div>
+            <div class="hero-actions">
+                <button id="dashboardOpenCatalogBtn" class="secondary-btn" type="button" onclick="document.getElementById('navCatalogBtn').click()">Перейти к каталогу</button>
+                <button class="secondary-btn" type="button" onclick="document.getElementById('navCatalogControlBtn').click()">Контроль каталога</button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="dash-card"><span>Всего товаров</span><strong id="dashTotalProducts">0</strong></div>
+            <div class="dash-card"><span>Активных товаров</span><strong id="dashActiveProducts">0</strong></div>
+            <div class="dash-card"><span>Скрытых товаров</span><strong id="dashHiddenProducts">0</strong></div>
+            <div class="dash-card"><span>Без изображения</span><strong id="dashNoImageProducts">0</strong></div>
+            <div class="dash-card"><span>Нулевой остаток</span><strong id="dashOutOfStockProducts">0</strong></div>
+            <div class="dash-card"><span>Без цены</span><strong id="dashWithoutPriceProducts">0</strong></div>
+            <div class="dash-card"><span>Средняя цена</span><strong id="dashAvgPrice">0 ₽</strong></div>
+            <div class="dash-card dash-card-accent"><span>Всего заказов</span><strong id="dashOrdersTotal">0</strong></div>
+            <div class="dash-card dash-card-accent"><span>Новых заказов</span><strong id="dashOrdersNew">0</strong></div>
+            <div class="dash-card dash-card-accent"><span>Сумма заказов</span><strong id="dashRevenue">0 ₽</strong></div>
+            <div class="dash-card dash-card-payment"><span>Оплаченных заказов</span><strong id="dashOrdersPaid">0</strong></div>
+            <div class="dash-card dash-card-payment"><span>Ожидают оплаты</span><strong id="dashPaymentsPending">0</strong></div>
+            <div class="dash-card dash-card-payment"><span>Оплаченная сумма</span><strong id="dashPaidRevenue">0 ₽</strong></div>
+            <div class="dash-card dash-card-support"><span>Открытых обращений</span><strong id="dashSupportOpen">0</strong></div>
+        </div>
+
+        <div class="report-actions">
+            <button id="exportProductsBtn" type="button">Экспорт активных товаров</button>
+            <button id="exportArchiveBtn" class="secondary-btn" type="button">Экспорт архива</button>
+            <button id="exportOrdersBtn" class="secondary-btn" type="button">Экспорт заказов</button>
+        </div>
+
+        <div class="dashboard-columns admin-dashboard-columns">
+            <div class="dashboard-panel-card">
+                <div class="panel-title-row">
+                    <h3>Последние заказы</h3>
+                    <button type="button" onclick="document.getElementById('navAdminOrdersBtn').click()">Открыть</button>
+                </div>
+                <div id="dashboardRecentOrders" class="mini-list"></div>
+            </div>
+            <div class="dashboard-panel-card">
+                <div class="panel-title-row">
+                    <h3>Последние действия</h3>
+                    <button type="button" onclick="document.getElementById('navActivityBtn').click()">Открыть</button>
+                </div>
+                <div id="dashboardRecentActivity" class="mini-list"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="catalogControlSection" class="shop-section hidden">
+        <div class="section-header">
+            <div>
+                <p class="eyebrow">Контроль качества данных</p>
+                <h2>Проблемные товары</h2>
+                <p class="section-subtitle">Система автоматически выделяет позиции, которые могут мешать продажам или требуют внимания администратора.</p>
+            </div>
+            <div class="section-actions">
+                <button id="refreshCatalogControlBtn" class="secondary-btn" type="button">Обновить</button>
+                <button id="exportWarningsBtn" type="button">Экспорт проблем</button>
+            </div>
+        </div>
+        <div class="section-content">
+            <div class="control-summary">
+                <span>Всего найдено проблем:</span>
+                <strong id="controlTotalIssues">0</strong>
+            </div>
+            <div id="catalogControlBody" class="control-grid"></div>
+        </div>
+    </section>
+
+    <section id="cartSection" class="shop-section hidden">
+        <div class="section-header">
+            <div>
+                <p class="eyebrow">Покупательская часть</p>
+                <h2>Корзина</h2>
+            </div>
+            <button type="button" class="secondary-btn" onclick="document.getElementById('navCatalogBtn').click()">Продолжить покупки</button>
+        </div>
+        <div class="section-content">
+            <div id="cartEmpty" class="empty-state hidden">Корзина пока пуста. Добавьте товары из каталога.</div>
+            <div id="cartUnavailableNotice" class="cart-unavailable-notice hidden">В корзине есть недоступные товары. Удалите их или измените количество перед оформлением заказа.</div>
+            <div id="cartList" class="cart-list"></div>
+            <div class="cart-summary">
+                <span>Итого:</span>
+                <strong id="cartTotal">0 ₽</strong>
+                <button id="checkoutBtn" type="button">Оформить заказ</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="ordersSection" class="shop-section hidden">
+        <div class="section-header">
+            <div>
+                <p class="eyebrow">Обработка заявок</p>
+                <h2 id="ordersTitle">Заказы</h2>
+            </div>
+        </div>
+        <div class="section-content">
+            <div id="ordersBody" class="orders-list"></div>
+        </div>
+    </section>
+
+    <section id="activitySection" class="shop-section hidden">
+        <div class="section-header">
+            <div>
+                <p class="eyebrow">Аудит системы</p>
+                <h2>Общий журнал действий</h2>
+            </div>
+        </div>
+        <div class="section-content">
+            <div id="activityBody" class="activity-list"></div>
+        </div>
+    </section>
+
+
+    <section id="usersSection" class="shop-section hidden">
+        <div class="section-header">
+            <div>
+                <p class="eyebrow">Администрирование</p>
+                <h2>Учётные записи пользователей</h2>
+                <p class="section-subtitle">Администратор может создавать, изменять и удалять учётные записи. Пароли не отображаются в интерфейсе.</p>
+            </div>
+        </div>
+        <div class="section-content admin-users-grid">
+            <form id="adminUserForm" class="dashboard-panel-card admin-user-form">
+                <input type="hidden" id="adminUserId">
+                <h3 id="adminUserFormTitle">Новая учётная запись</h3>
+                <label class="modal-field">
+                    <span>Логин</span>
+                    <input type="text" id="adminUsernameInput" maxlength="80" placeholder="Введите логин" required>
+                </label>
+                <label class="modal-field">
+                    <span>Роль</span>
+                    <select id="adminUserRoleSelect">
+                        <option value="user">Пользователь</option>
+                        <option value="admin">Администратор</option>
+                    </select>
+                </label>
+                <label class="modal-field">
+                    <span>Новый пароль</span>
+                    <input type="password" id="adminUserPasswordInput" placeholder="Заполните только для установки/смены пароля">
+                    <small class="field-hint">Текущий пароль не отображается и не передаётся на клиент.</small>
+                </label>
+                <p id="adminUserFormError" class="error hidden"></p>
+                <div class="modal-actions">
+                    <button type="submit">Сохранить</button>
+                    <button id="adminUserResetBtn" class="secondary-btn" type="button">Очистить</button>
+                </div>
+            </form>
+            <div class="dashboard-panel-card users-list-card">
+                <div class="panel-title-row">
+                    <h3>Список пользователей</h3>
+                    <button id="refreshUsersBtn" class="secondary-btn" type="button">Обновить</button>
+                </div>
+                <div id="adminUsersBody" class="admin-users-list"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="supportSection" class="shop-section hidden">
+        <div class="section-header support-section-header">
+            <div>
+                <p class="eyebrow">Техническая поддержка</p>
+                <h2 id="supportTitle">Обращения</h2>
+                <p class="section-subtitle" id="supportSubtitle">Создавайте обращения и ведите переписку по возникшим вопросам.</p>
+            </div>
+        </div>
+        <div class="section-content support-layout">
+            <aside class="dashboard-panel-card support-sidebar">
+                <div class="support-sidebar-head">
+                    <div>
+                        <h3>Обращения</h3>
+                        <p>Выберите тикет, чтобы открыть переписку.</p>
+                    </div>
+                    <div class="support-sidebar-actions">
+                        <button id="supportNewTicketBtn" class="secondary-btn support-new-btn" type="button">Новое</button>
+                        <button id="refreshSupportBtn" class="secondary-btn" type="button">Обновить</button>
+                    </div>
+                </div>
+
+                <div id="supportCreatePanel" class="support-create-panel hidden">
+                    <form id="supportTicketForm" class="support-create-card">
+                        <div class="support-create-head">
+                            <h3>Новое обращение</h3>
+                            <button id="supportCancelCreateBtn" class="secondary-btn" type="button">Свернуть</button>
+                        </div>
+                        <label class="modal-field">
+                            <span>Заголовок проблемы</span>
+                            <input type="text" id="supportTicketTitleInput" maxlength="160" placeholder="Например: не оформляется заказ" required>
+                        </label>
+                        <label class="modal-field">
+                            <span>Категория</span>
+                            <select id="supportTicketCategorySelect">
+                                <option value="catalog">Каталог товаров</option>
+                                <option value="cart">Корзина</option>
+                                <option value="order">Заказы</option>
+                                <option value="account">Учётная запись</option>
+                                <option value="sync">Синхронизация</option>
+                                <option value="other">Другое</option>
+                            </select>
+                        </label>
+                        <label class="modal-field full-width">
+                            <span>Описание проблемы</span>
+                            <textarea id="supportTicketDescriptionInput" rows="5" placeholder="Опишите, что произошло и при каких действиях" required></textarea>
+                        </label>
+                        <label class="modal-field full-width">
+                            <span>Файлы или скриншоты</span>
+                            <input type="file" id="supportTicketFilesInput" multiple>
+                            <small class="field-hint">Можно прикрепить до 5 файлов: изображения, PDF, документы, архивы.</small>
+                        </label>
+                        <p id="supportTicketFormError" class="error hidden"></p>
+                        <button type="submit">Отправить обращение</button>
+                    </form>
+                </div>
+
+                <div id="supportTicketsList" class="support-ticket-list"></div>
+            </aside>
+
+            <div class="dashboard-panel-card support-chat-card">
+                <div id="supportTicketDetail" class="support-ticket-detail empty-state">Выберите обращение из списка.</div>
+                <form id="supportMessageForm" class="support-message-form hidden">
+                    <textarea id="supportMessageInput" rows="3" placeholder="Введите сообщение"></textarea>
+                    <div class="support-message-bottom">
+                        <input type="file" id="supportMessageFilesInput" multiple>
+                        <div class="support-message-actions">
+                            <button type="submit">Отправить</button>
+                            <button id="supportCloseTicketBtn" class="danger-btn hidden" type="button">Закрыть обращение</button>
+                        </div>
+                    </div>
+                    <p id="supportMessageError" class="error hidden"></p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <div id="catalogControlsBar" class="catalog-command-bar hidden">
+        <div class="catalog-command-text">
+            <p id="catalogCommandEyebrow" class="eyebrow">Каталог товаров</p>
+            <h2 id="catalogCommandTitle">Управление локальным каталогом</h2>
+            <p id="catalogCommandDescription">Загружайте товары из локальной базы или выполняйте синхронизацию с Ozon прямо из каталога.</p>
+        </div>
+        <div class="catalog-command-actions">
+            <button id="loadFromDbBtn" class="secondary-btn">Загрузить товары из базы</button>
+            <button id="getProductsBtn">Синхронизировать товары с Ozon</button>
+        </div>
+    </div>
+
+    <div id="emptyDbMessage" class="hidden card empty-db-card">
+        В базе данных пока нет товаров. Нажмите “Синхронизировать товары с Ozon”, чтобы загрузить их.
+    </div>
+
+    <div id="loadingMessage" class="hidden" aria-hidden="true"></div>
+    <div id="errorMessage" class="hidden error">Произошла ошибка при загрузке.</div>
+
+    <div id="filters" class="hidden card catalog-filters-card">
+        <div class="catalog-card-head">
+            <div>
+                <p class="eyebrow">Навигация по каталогу</p>
+                <h2>Фильтры и сортировка</h2>
+            </div>
+        </div>
+        <div class="filters-row">
+            <input type="text" id="searchInput" placeholder="Поиск по названию">
+            <input type="number" id="minPriceInput" placeholder="Цена от">
+            <input type="number" id="maxPriceInput" placeholder="Цена до">
+            <select id="sortBySelect">
+               <option value="last_synced" selected>По дате синхронизации</option>
+               <option value="price">По цене</option>
+               <option value="name">По названию</option>
+            </select>
+            <select id="sortDirSelect">
+               <option value="desc" selected>По убыванию</option>
+               <option value="asc">По возрастанию</option>
+            </select>
+            <button id="applyFiltersBtn">Применить</button>
+        </div>
+    </div>
+
+    <div id="productsContainer" class="hidden card catalog-products-card">
+        <div class="products-header products-header-modern">
+            <div>
+                <p class="eyebrow">Ассортимент</p>
+                <h2 id="productsSectionTitle">Список товаров</h2>
+            </div>
+        </div>
+
+        <div class="catalog-tabs-toolbar">
+            <div class="tabs">
+                <button id="tabActive" class="tab-btn tab-active">Товары</button>
+                <button id="tabArchive" class="tab-btn">Архив удалённых</button>
+            </div>
+            <button id="addProductBtn" class="secondary-btn">Добавить товар</button>
+        </div>
+
+        <div id="archiveEmpty" class="hidden archive-empty">Архив пуст, товаров нет.</div>
+
+        <ul id="productsList"></ul>
+
+        <div id="pagination" class="hidden">
+            <button id="prevPageBtn">&laquo; Назад</button>
+            <span id="pageInfo">Страница 1 из 1</span>
+            <button id="nextPageBtn">Вперёд &raquo;</button>
+        </div>
+    </div>
+
+    <div id="syncLogsContainer" class="card hidden">
+        <div class="catalog-card-head">
+            <div>
+                <p class="eyebrow">История операций</p>
+                <h2>История синхронизаций</h2>
+            </div>
+        </div>
+        <table id="syncLogsTable">
+            <thead>
+                <tr>
+                    <th>Начало</th>
+                    <th>Окончание</th>
+                    <th>Статус</th>
+                    <th>Обновлено товаров</th>
+                    <th>Сообщение об ошибке</th>
+                </tr>
+            </thead>
+            <tbody id="syncLogsBody"></tbody>
+        </table>
+    </div>
+
+    <div id="productModal" class="modal hidden">
+        <div class="modal-content">
+            <span id="modalClose" class="modal-close">&times;</span>
+            <div class="modal-body">
+                <div class="modal-left">
+                    <div class="modal-image-wrapper">
+                        <img id="modalImage" src="" alt="Изображение товара" class="modal-image">
+                    </div>
+                    <p class="modal-sync">
+                        <strong>Последняя синхронизация:</strong>
+                        <span id="modalLastSynced">—</span>
+                    </p>
+                </div>
+                <div class="modal-right">
+                    <h2 id="modalTitle">Товар</h2>
+                    <div class="modal-grid">
+                        <label class="modal-field">
+                            <span>Название</span>
+                            <input type="text" id="modalNameInput" maxlength="120">
+                            <small id="nameCounter" class="field-counter">0 / 120</small>
+                        </label>
+                        <label class="modal-field">
+                            <span>Offer ID</span>
+                            <input type="text" id="modalOfferIdInput">
+                        </label>
+                        <label class="modal-field">
+                            <span>Product ID</span>
+                            <input type="text" id="modalProductIdInput">
+                        </label>
+                        <label class="modal-field">
+                            <span>Цена (RUB)</span>
+                            <input type="number" step="0.01" id="modalPriceInput">
+                        </label>
+                        <label class="modal-field">
+                            <span>Остаток (шт.)</span>
+                            <input type="text" id="modalStockInput" min="0" step="1">
+                        </label>
+                        <label class="modal-field full-width">
+                            <span>URL изображения</span>
+                            <input type="text" id="modalImageUrlInput" maxlength="400">
+                            <small id="urlCounter" class="field-counter">0 / 400</small>
+                        </label>
+                    </div>
+                    <div class="modal-actions">
+                        <button id="modalSaveBtn">Сохранить</button>
+                        <button id="modalHistoryBtn" class="secondary-btn" type="button">История</button>
+                        <button id="modalDeleteBtn" class="danger-btn">Удалить</button>
+                    </div>
+                    <p id="modalFormError" class="error hidden"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="syncOptionsModal" class="modal hidden">
+        <div class="modal-content sync-modal">
+            <span id="syncOptionsClose" class="modal-close">&times;</span>
+            <h2 class="sync-modal-title">Параметры синхронизации</h2>
+            <div class="sync-modal-options">
+                <label class="sync-option">
+                    <input type="checkbox" id="overwriteManualCheckbox">
+                    <span>Перезаписать вручную отредактированные товары</span>
+                </label>
+                <label class="sync-option">
+                    <input type="checkbox" id="overwriteHiddenCheckbox">
+                    <span>Восстановить скрытые (архивные) товары</span>
+                </label>
+            </div>
+            <div class="modal-actions sync-modal-actions">
+                <button id="confirmSyncBtn">Синхронизировать</button>
+                <button id="cancelSyncBtn" class="secondary-btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal hidden">
+        <div class="modal-content sync-modal">
+            <span id="historyClose" class="modal-close">&times;</span>
+            <h2 class="sync-modal-title">История изменений</h2>
+            <div id="historyBody" class="history-body"></div>
+            <div class="modal-actions sync-modal-actions">
+                <button id="historyCloseBtn" class="secondary-btn" type="button">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="checkoutModal" class="modal hidden">
+        <div class="modal-content sync-modal checkout-modal-content">
+            <span id="checkoutClose" class="modal-close">&times;</span>
+            <h2 class="sync-modal-title">Оформление заказа</h2>
+            <form id="checkoutForm" class="checkout-form">
+                <label class="modal-field">
+                    <span>Имя покупателя</span>
+                    <input type="text" id="customerNameInput" placeholder="Иван Иванов" required>
+                </label>
+                <label class="modal-field">
+                    <span>Телефон</span>
+                    <input type="text" id="customerPhoneInput" placeholder="+7 900 000-00-00" required>
+                </label>
+                <label class="modal-field full-width">
+                    <span>Комментарий</span>
+                    <textarea id="customerCommentInput" rows="4" placeholder="Например: уточнить совместимость перед подтверждением"></textarea>
+                </label>
+                <label class="modal-field full-width">
+                    <span>Способ оплаты</span>
+                    <select id="checkoutPaymentMethodSelect">
+                        <option value="test_card">Тестовая онлайн-оплата картой</option>
+                        <option value="cash_on_delivery">Оплата при получении</option>
+                    </select>
+                    <small class="field-hint">Онлайн-оплата работает в демонстрационном режиме и не списывает реальные деньги.</small>
+                </label>
+                <div class="checkout-preview">
+                    <span>После оформления заказ появится в разделе «Мои заказы».</span>
+                    <b id="checkoutPreviewTotal">Итого: 0 ₽</b>
+                </div>
+                <p id="checkoutError" class="error hidden"></p>
+                <div class="modal-actions sync-modal-actions">
+                    <button type="submit">Создать заказ</button>
+                    <button id="checkoutCancelBtn" class="secondary-btn" type="button">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="paymentModal" class="modal hidden">
+        <div class="modal-content payment-modal-content">
+            <span id="paymentClose" class="modal-close">&times;</span>
+            <div class="payment-layout">
+                <div class="payment-summary-card">
+                    <p class="eyebrow">Демонстрационная оплата</p>
+                    <h2>Оплата заказа №<span id="paymentOrderId">—</span></h2>
+                    <p>Платёжный сценарий имитирует работу эквайринга. Реальные денежные средства не списываются.</p>
+                    <div class="payment-amount-box">
+                        <span>К оплате</span>
+                        <strong id="paymentAmount">0 ₽</strong>
+                    </div>
+                    <div class="payment-test-hint">
+                        <b>Тест:</b> любая карта проходит успешно, а номер, заканчивающийся на <code>0000</code>, имитирует отказ.
+                    </div>
+                </div>
+                <form id="paymentForm" class="payment-form">
+                    <label class="modal-field full-width">
+                        <span>Номер карты</span>
+                        <input type="text" id="paymentCardNumberInput" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="4111 1111 1111 1111" required>
+                            <small class="field-hint">Пример успешной тестовой карты: 4111 1111 1111 1111.</small>
+                    </label>
+                    <label class="modal-field full-width">
+                        <span>Держатель карты</span>
+                        <input type="text" id="paymentCardHolderInput" placeholder="IVAN IVANOV" required>
+                    </label>
+                    <div class="payment-two-cols">
+                        <label class="modal-field">
+                            <span>Срок</span>
+                            <input type="text" id="paymentExpiryInput" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="ММ/ГГ" required>
+                        </label>
+                        <label class="modal-field">
+                            <span>CVV</span>
+                            <input type="password" id="paymentCvvInput" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="123" required>
+                        </label>
+                    </div>
+                    <p id="paymentError" class="error hidden"></p>
+                    <div class="modal-actions sync-modal-actions">
+                        <button type="submit">Оплатить заказ</button>
+                        <button id="paymentCancelBtn" class="secondary-btn" type="button">Позже</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-content confirm-modal-content">
+            <span id="confirmModalClose" class="modal-close">&times;</span>
+            <div class="confirm-modal-icon">!</div>
+            <h2 id="confirmModalTitle" class="sync-modal-title">Подтверждение</h2>
+            <p id="confirmModalText" class="confirm-modal-text">Вы уверены?</p>
+            <div class="modal-actions sync-modal-actions">
+                <button id="confirmModalAccept">Подтвердить</button>
+                <button id="confirmModalCancel" class="secondary-btn" type="button">Отмена</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <p>© 2026 АвтоПро</p>
+</footer>
+
+<script src="{{ url_for('static', filename='script.js') }}?v=10"></script>
+<script src="{{ url_for('static', filename='shop.js') }}?v=6"></script>
+</body>
+</html>
