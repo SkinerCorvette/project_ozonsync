@@ -1248,7 +1248,7 @@ footer {
 
 .cart-item {
     display: grid;
-    grid-template-columns: 70px 1fr 120px 90px 130px 90px;
+    grid-template-columns: 70px 1fr 145px 90px 130px 90px;
     gap: 14px;
     align-items: center;
     padding: 14px;
@@ -1290,6 +1290,7 @@ footer {
 .cart-line-total {
     font-weight: 800;
     color: #0f172a;
+    white-space: nowrap;
 }
 
 .cart-qty {
@@ -2603,7 +2604,7 @@ body:not(.authenticated) .header-user-panel {
 
 .filters-row {
     display: grid !important;
-    grid-template-columns: minmax(320px, 2.2fr) minmax(130px, .8fr) minmax(130px, .8fr) minmax(170px, .9fr) minmax(150px, .9fr) minmax(150px, .8fr) !important;
+    grid-template-columns: minmax(320px, 2.2fr) minmax(130px, .8fr) minmax(130px, .8fr) minmax(210px, 1fr) minmax(180px, .9fr) minmax(150px, .8fr) !important;
     align-items: center !important;
     gap: 12px !important;
 }
@@ -3935,14 +3936,19 @@ body.is-shop-user #productsContainer .products-header h2::after {
 
 .support-ticket-list {
     gap: 7px !important;
+    align-content: start !important;
+    align-items: start !important;
+    grid-auto-rows: max-content !important;
 }
 
 .support-ticket-row {
     padding: 9px 10px !important;
     border-radius: 14px !important;
     gap: 8px !important;
-    min-height: auto !important;
+    min-height: 58px !important;
+    height: auto !important;
     align-items: center !important;
+    align-self: start !important;
 }
 
 .support-ticket-row strong {
@@ -4026,4 +4032,9 @@ body.is-shop-user #productsContainer .products-header h2::after {
 }
 .control-product-row {
     display: grid !important;
+}
+
+.payment-form input::placeholder {
+    color: rgba(100, 116, 139, 0.55);
+    opacity: 1;
 }

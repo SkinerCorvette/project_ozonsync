@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span>${escapeHtml(item.offer_id || '—')}</span>
                         ${unavailable ? `<em class="cart-unavailable-label">${escapeHtml(item.unavailable_reason || 'Недоступен для заказа')}</em>` : ''}
                     </div>
-                    <div class="cart-price">${money(item.price)}</div>
+                    <div class="cart-price">${money(item.price)} за шт.</div>
                     <input class="cart-qty" type="number" min="1" ${maxAttr} value="${item.quantity}" ${(!canUpdate && unavailable) ? 'disabled' : ''}>
                     <div class="cart-line-total">${unavailable ? '—' : money(item.total_price)}</div>
                     <button class="cart-delete-btn" type="button">Удалить</button>
@@ -893,9 +893,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (paymentOrderId) paymentOrderId.textContent = order.id || '—';
         if (paymentAmount) paymentAmount.textContent = money(order.total_amount || 0);
         if (paymentForm) paymentForm.reset();
-        if (paymentCardNumberInput) paymentCardNumberInput.value = '4111 1111 1111 1111';
-        if (paymentExpiryInput) paymentExpiryInput.value = '12/28';
-        if (paymentCvvInput) paymentCvvInput.value = '123';
         paymentModal.classList.remove('hidden');
         setTimeout(() => paymentCardNumberInput?.focus(), 0);
     }

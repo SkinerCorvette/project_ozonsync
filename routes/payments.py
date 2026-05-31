@@ -99,7 +99,7 @@ def pay_order(order_id):
         order.updated_at = now
         log_activity('payment_failed', 'payment', f'Оплата заказа №{order.id} не прошла', payment.id)
         db.session.commit()
-        return jsonify({"message": "Оплата не прошла. Проверьте данные карты или используйте другую тестовую карту."}), 400
+        return jsonify({"message": "Оплата не прошла. Проверьте данные карты или используйте другую карту."}), 400
 
     payment.status = 'paid'
     payment.error_message = None

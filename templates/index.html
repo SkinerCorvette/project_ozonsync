@@ -538,10 +538,9 @@
                 <label class="modal-field full-width">
                     <span>Способ оплаты</span>
                     <select id="checkoutPaymentMethodSelect">
-                        <option value="test_card">Тестовая онлайн-оплата картой</option>
+                        <option value="test_card">Онлайн-оплата картой</option>
                         <option value="cash_on_delivery">Оплата при получении</option>
                     </select>
-                    <small class="field-hint">Онлайн-оплата работает в демонстрационном режиме и не списывает реальные деньги.</small>
                 </label>
                 <div class="checkout-preview">
                     <span>После оформления заказ появится в разделе «Мои заказы».</span>
@@ -561,43 +560,73 @@
             <span id="paymentClose" class="modal-close">&times;</span>
             <div class="payment-layout">
                 <div class="payment-summary-card">
-                    <p class="eyebrow">Демонстрационная оплата</p>
                     <h2>Оплата заказа №<span id="paymentOrderId">—</span></h2>
-                    <p>Платёжный сценарий имитирует работу эквайринга. Реальные денежные средства не списываются.</p>
+                    <p>Введите данные банковской карты, чтобы завершить оплату заказа.</p>
                     <div class="payment-amount-box">
                         <span>К оплате</span>
                         <strong id="paymentAmount">0 ₽</strong>
-                    </div>
-                    <div class="payment-test-hint">
-                        <b>Тест:</b> любая карта проходит успешно, а номер, заканчивающийся на <code>0000</code>, имитирует отказ.
                     </div>
                 </div>
                 <form id="paymentForm" class="payment-form">
                     <label class="modal-field full-width">
                         <span>Номер карты</span>
-                        <input type="text" id="paymentCardNumberInput" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="4111 1111 1111 1111" required>
-                            <small class="field-hint">Пример успешной тестовой карты: 4111 1111 1111 1111.</small>
-                    </label>
-                    <label class="modal-field full-width">
-                        <span>Держатель карты</span>
-                        <input type="text" id="paymentCardHolderInput" placeholder="IVAN IVANOV" required>
-                    </label>
-                    <div class="payment-two-cols">
-                        <label class="modal-field">
-                            <span>Срок</span>
-                            <input type="text" id="paymentExpiryInput" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="ММ/ГГ" required>
+                        <input 
+                            type="text" 
+                            id="paymentCardNumberInput" 
+                            inputmode="numeric" 
+                            autocomplete="cc-number" 
+                            maxlength="19" 
+                            placeholder="4111 1111 1111 1111" 
+                            required
+                            >
                         </label>
-                        <label class="modal-field">
-                            <span>CVV</span>
-                            <input type="password" id="paymentCvvInput" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="123" required>
+
+                        <label class="modal-field full-width">
+                            <span>Держатель карты</span>
+                            <input 
+                                type="text" 
+                                id="paymentCardHolderInput" 
+                                autocomplete="cc-name"
+                                placeholder="IVAN IVANOV" 
+                                required
+                            >
                         </label>
-                    </div>
-                    <p id="paymentError" class="error hidden"></p>
-                    <div class="modal-actions sync-modal-actions">
-                        <button type="submit">Оплатить заказ</button>
-                        <button id="paymentCancelBtn" class="secondary-btn" type="button">Позже</button>
-                    </div>
-                </form>
+
+                        <div class="payment-two-cols">
+                            <label class="modal-field">
+                                <span>Срок</span>
+                                <input 
+                                    type="text" 
+                                    id="paymentExpiryInput" 
+                                    inputmode="numeric" 
+                                    autocomplete="cc-exp" 
+                                    maxlength="5" 
+                                    placeholder="12/28" 
+                                    required
+                                >
+                            </label>
+
+                            <label class="modal-field">
+                                <span>CVV</span>
+                                <input 
+                                    type="password" 
+                                    id="paymentCvvInput" 
+                                    inputmode="numeric" 
+                                    autocomplete="cc-csc" 
+                                    maxlength="4" 
+                                    placeholder="123" 
+                                    required
+                                >
+                            </label>
+                        </div>
+
+                        <p id="paymentError" class="error hidden"></p>
+
+                        <div class="modal-actions sync-modal-actions">
+                            <button type="submit">Оплатить заказ</button>
+                            <button id="paymentCancelBtn" class="secondary-btn" type="button">Позже</button>
+                        </div>
+                    </form>
             </div>
         </div>
     </div>

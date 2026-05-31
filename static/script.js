@@ -790,8 +790,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modalMode = (currentListMode === 'archive') ? 'view' : 'edit';
         modalCurrentOfferId = data.offer_id;
 
-        modalTitle.textContent = 'Редактирование товара';
-
         modalNameInput.value = data.name || '';
         modalOfferIdInput.value = data.offer_id || '';
         modalProductIdInput.value = data.product_id || '';
@@ -826,12 +824,14 @@ document.addEventListener('DOMContentLoaded', () => {
             modalLastSynced.textContent = '—';
         }
 
-        const isViewOnly = modalMode === 'view';
+        const isAdmin = currentUserRole === "admin";
+        const isArchiveView = modalMode === 'view';
+        const isViewOnly = isArchiveView || !isAdmin;
 
         // Заголовок
-        modalTitle.textContent = isViewOnly
+        modalTitle.textContent = isArchiveView
             ? 'Просмотр товара (архив)'
-            : 'Редактирование товара';
+            : (isAdmin ? 'Редактирование товара' : 'Информация о товаре');
 
         // readonly режим
         modalNameInput.readOnly = isViewOnly;
@@ -840,6 +840,10 @@ document.addEventListener('DOMContentLoaded', () => {
         modalPriceInput.readOnly = isViewOnly;
         if (modalStockInput) modalStockInput.readOnly = isViewOnly;
         modalImageUrlInput.readOnly = isViewOnly;
+
+        // Счётчики лимита символов нужны только в режиме редактирования
+        if (nameCounter) nameCounter.style.display = isViewOnly ? 'none' : '';
+        if (urlCounter) urlCounter.style.display = isViewOnly ? 'none' : '';
 
         // Кнопки
         if (isViewOnly) {
@@ -1244,9 +1248,15 @@ document.addEventListener('keydown', (e) => {
         modalImageUrlInput.value = '';
         modalLastSynced.textContent = '—';
         modalImage.style.display = 'none';
+
         updateCounter(modalNameInput, nameCounter, 120);
         if (modalImageUrlInput) updateCounter(modalImageUrlInput, urlCounter, 400);
+
+        if (nameCounter) nameCounter.style.display = '';
+        if (urlCounter) urlCounter.style.display = '';
+
         validateModalFormLive();
+
         applyRoleToModal();
 
         if (modalHistoryBtn) modalHistoryBtn.style.display = 'none';
