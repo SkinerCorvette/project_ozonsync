@@ -93,9 +93,6 @@ def create_product_local():
     stock = data.get('stock')
     image_url = data.get('image_url')
     
-    print("DEBUG stock raw:", repr(stock),
-          type(stock))
-    
     if not name or not str(name).strip():
         return jsonify({"message": "Название товара обязательно."}), 400
 
@@ -131,29 +128,27 @@ def create_product_local():
         return jsonify({"message": "Товар c таким product_id уже существует."}), 409
 
     try:
-        price_value = float(price) if price is not None else None
+        price_text = str(price).strip() if price is not None else ""
+
+        if price_text and len(price_text) > 15:
+            return jsonify({"message": "Цена слишком длинная. Максимум 15 символов."}), 400
+
+        price_value = float(price_text) if price_text else None
     except (TypeError, ValueError):
         return jsonify({"message": "Некорректное значение цены."}), 400
-    
-    if stock is None:
+
+    stock_text = str(stock).strip() if stock is not None else ""
+
+    if not stock_text:
         stock_value = None
     else:
-    # если пришла строка - уберём пробелы
-        if isinstance(stock, str):
-            stock = stock.strip()
-            if stock == "":
-                stock_value = None
-            else:
-                try:
-                    stock_value = int(stock)
-                except ValueError:
-                    return jsonify({"message": "Некорректное значение остатка."}), 400
-        else:
-        # если пришло число (int/float)
-            try:
-                stock_value = int(stock)
-            except (TypeError, ValueError):
-                return jsonify({"message": "Некорректное значение остатка."}), 400
+        if len(stock_text) > 15:
+            return jsonify({"message": "Остаток слишком длинный. Максимум 15 символов."}), 400
+
+        if not stock_text.isdigit():
+            return jsonify({"message": "Остаток должен быть целым числом (0 или больше)."}), 400
+
+    stock_value = int(stock_text)
 
     new_product = Product(
         product_id=product_id,
@@ -193,17 +188,19 @@ def update_product_local(offer_id):
     price = data.get('price')
     if 'stock' in data:
         stock_raw = data.get('stock')
-        if stock_raw is None or stock_raw == "":
+        stock_text = str(stock_raw).strip() if stock_raw is not None else ""
+
+        if stock_text == "":
             product.stock = None
         else:
-            try:
-                stock_value = int(stock_raw)
-            except (TypeError, ValueError):
-                return jsonify({"message": "Некорректное значение остатка."}), 400
-            if stock_value < 0:
-                return jsonify({"message": "Остаток не может быть отрицательным."}), 400
-            product.stock = stock_value
-    image_url = data.get('image_url')
+            if len(stock_text) > 15:
+                return jsonify({"message": "Остаток слишком длинный. Максимум 15 символов."}), 400
+
+            if not stock_text.isdigit():
+                return jsonify({"message": "Остаток должен быть целым числом (0 или больше)."}), 400
+
+        product.stock = int(stock_text)
+        image_url = data.get('image_url')
     
     if name is not None and len(name) > 120:
         return jsonify({"message": "Название слишком длинное. Максимум 120 символов."}), 400
@@ -215,8 +212,13 @@ def update_product_local(offer_id):
         product.name = name
 
     if price is not None:
+        price_text = str(price).strip()
+
+        if price_text and len(price_text) > 15:
+            return jsonify({"message": "Цена слишком длинная. Максимум 15 символов."}), 400
+
         try:
-            product.price = float(price)
+            product.price = float(price_text) if price_text else None
         except (TypeError, ValueError):
             return jsonify({"message": "Некорректное значение цены."}), 400
 

@@ -2,6 +2,7 @@ import os
 import json
 import datetime
 import requests
+import uuid
 
 from flask import Blueprint, jsonify, request, render_template
 from flask_login import login_user, logout_user, login_required, current_user
@@ -13,6 +14,11 @@ from helpers import admin_required, log_activity, product_issue_summary, csv_res
 from time_utils import app_now
 
 bp = Blueprint('orders', __name__)
+
+ORDER_STATUSES = {'new', 'processing', 'confirmed', 'cancelled', 'completed'}
+PAYMENT_STATUSES = {'pending', 'paid', 'failed', 'refunded', 'cancelled', 'cash_on_delivery', 'not_paid'}
+PAYMENT_METHODS = {'test_card', 'cash_on_delivery'}
+LOCKED_ORDER_STATUSES = {'completed', 'cancelled'}
 
 
 @bp.route('/api/orders', methods=['GET'])
@@ -159,6 +165,23 @@ def _cancel_or_refund_payments(order):
             if target_status == 'refunded' and not payment.error_message:
                 payment.error_message = 'Возврат отмечен при отмене заказа.'
 
+def _ensure_order_payment(order):
+    payment = order.latest_payment()
+    if payment:
+        return payment
+
+    status = order.payment_status or ('cash_on_delivery' if order.payment_method == 'cash_on_delivery' else 'pending')
+    payment = Payment(
+        order_id=order.id,
+        amount=order.total_amount,
+        method=order.payment_method or 'test_card',
+        provider='demo',
+        status=status,
+        expires_at=(app_now() + datetime.timedelta(minutes=30)) if (order.payment_method or 'test_card') == 'test_card' else None,
+    )
+    db.session.add(payment)
+    return payment
+
 
 @bp.route('/api/orders/<int:order_id>/status', methods=['PUT'])
 @login_required
@@ -170,10 +193,10 @@ def update_order_status(order_id):
 
     data = request.get_json() or {}
     new_status = data.get('status')
-    allowed_statuses = {'new', 'processing', 'confirmed', 'cancelled', 'completed'}
+    allowed_statuses = ORDER_STATUSES
 
-    if new_status not in allowed_statuses:
-        return jsonify({"message": "Некорректный статус заказа."}), 400
+    if order.status in LOCKED_ORDER_STATUSES and new_status != order.status:
+        return jsonify({"message": "Нельзя изменить статус завершённого или отменённого заказа."}), 400
 
     old_status = order.status
     order.status = new_status
@@ -184,6 +207,83 @@ def update_order_status(order_id):
         _cancel_or_refund_payments(order)
 
     log_activity('order_status_update', 'order', f'Статус заказа №{order.id}: {old_status} → {new_status}', order.id)
+    db.session.commit()
+    return jsonify(order.to_dict(include_items=True)), 200
+
+@bp.route('/api/orders/<int:order_id>/admin_update', methods=['PUT'])
+@login_required
+@admin_required
+def update_order_admin(order_id):
+    order = Order.query.get(order_id)
+    if not order:
+        return jsonify({"message": "Заказ не найден."}), 404
+
+    data = request.get_json() or {}
+
+    new_status = data.get('status', order.status)
+    new_payment_status = data.get('payment_status', order.payment_status)
+    new_payment_method = data.get('payment_method') or order.payment_method or 'test_card'
+
+    if new_status not in ORDER_STATUSES:
+        return jsonify({"message": "Некорректный статус заказа."}), 400
+
+    if new_payment_status not in PAYMENT_STATUSES:
+        return jsonify({"message": "Некорректный статус оплаты."}), 400
+
+    if new_payment_method not in PAYMENT_METHODS:
+        return jsonify({"message": "Некорректный способ оплаты."}), 400
+
+    if order.status in LOCKED_ORDER_STATUSES and new_status != order.status:
+        return jsonify({"message": "Нельзя изменить статус завершённого или отменённого заказа."}), 400
+
+    if order.payment_status == 'paid' and new_payment_status != order.payment_status:
+        return jsonify({"message": "Нельзя изменить статус оплаты уже оплаченного заказа."}), 400
+
+    old_status = order.status
+    old_payment_status = order.payment_status
+    old_payment_method = order.payment_method
+    now = app_now()
+
+    order.status = new_status
+    order.updated_at = now
+
+    if old_status != 'cancelled' and new_status == 'cancelled':
+        _restore_order_stock(order)
+        _cancel_or_refund_payments(order)
+    else:
+        order.payment_status = new_payment_status
+        order.payment_method = new_payment_method
+
+        payment = _ensure_order_payment(order)
+        payment.status = new_payment_status
+        payment.method = new_payment_method
+        payment.amount = order.total_amount
+        payment.updated_at = now
+
+        if new_payment_status == 'paid' and not payment.paid_at:
+            payment.paid_at = now
+            payment.transaction_id = payment.transaction_id or f'MANUAL-{uuid.uuid4().hex[:10].upper()}'
+
+        if new_payment_status in {'failed', 'cancelled', 'refunded'}:
+            payment.error_message = None if new_payment_status == 'refunded' else payment.error_message
+
+    if old_status != new_status:
+        log_activity(
+            'order_status_update',
+            'order',
+            f'Статус заказа №{order.id}: {old_status} → {new_status}',
+            order.id
+        )
+
+    if old_payment_status != order.payment_status or old_payment_method != order.payment_method:
+        payment = _ensure_order_payment(order)
+        log_activity(
+            'payment_status_update',
+            'payment',
+            f'Оплата заказа №{order.id}: {old_payment_method}/{old_payment_status} → {order.payment_method}/{order.payment_status}',
+            payment.id
+        )
+
     db.session.commit()
     return jsonify(order.to_dict(include_items=True)), 200
 

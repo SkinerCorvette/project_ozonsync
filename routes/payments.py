@@ -135,6 +135,9 @@ def update_payment_status(order_id):
     old_status = order.payment_status
     old_method = order.payment_method
     now = app_now()
+    
+    if old_status == 'paid' and new_status != old_status:
+        return jsonify({"message": "Нельзя изменить статус оплаты уже оплаченного заказа."}), 400
 
     order.payment_status = new_status
     order.payment_method = new_method

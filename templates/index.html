@@ -463,11 +463,13 @@
                         </label>
                         <label class="modal-field">
                             <span>Цена (RUB)</span>
-                            <input type="number" step="0.01" id="modalPriceInput">
+                            <input type="number" step="0.01" id="modalPriceInput" maxlength="15">
+                            <small id="priceCounter" class="field-counter">0 / 15</small>
                         </label>
                         <label class="modal-field">
                             <span>Остаток (шт.)</span>
-                            <input type="text" id="modalStockInput" min="0" step="1">
+                            <input type="text" id="modalStockInput" inputmode="numeric" pattern="[0-9]*" maxlength="15" autocomplete="off">
+                            <small id="stockCounter" class="field-counter">0 / 15</small>
                         </label>
                         <label class="modal-field full-width">
                             <span>URL изображения</span>

@@ -104,6 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
     //счётчик подстветка
     const nameCounter = document.getElementById('nameCounter');
     const urlCounter = document.getElementById('urlCounter');
+    const priceCounter = document.getElementById('priceCounter');
+    const stockCounter = document.getElementById('stockCounter');
+    const PRICE_STOCK_MAX = 15;
 
     const authPanelTitle = document.getElementById('authPanelTitle');
     const toastViewport = document.getElementById('toastViewport');
@@ -225,23 +228,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function validateModalFormLive() {
-        // базовые правила
         const nameVal = modalNameInput.value.trim();
         const nameLen = modalNameInput.value.length;
         const nameMax = parseInt(modalNameInput.getAttribute('maxlength') || '120', 10);
 
         const urlMax = modalImageUrlInput
-        ? parseInt(modalImageUrlInput.getAttribute('maxlength') || '400', 10)
-        : 0;
+            ? parseInt(modalImageUrlInput.getAttribute('maxlength') || '400', 10)
+            : 0;
         const urlLen = modalImageUrlInput ? modalImageUrlInput.value.length : 0;
+
+        const priceLen = modalPriceInput ? modalPriceInput.value.length : 0;
+        const stockLen = modalStockInput ? modalStockInput.value.length : 0;
 
         const nameOk = nameVal.length > 0 && nameLen <= nameMax;
         const urlOk = !modalImageUrlInput || urlLen <= urlMax;
+        const priceOk = !modalPriceInput || priceLen <= PRICE_STOCK_MAX;
+        const stockOk = !modalStockInput || (
+            stockLen <= PRICE_STOCK_MAX && /^\d*$/.test(modalStockInput.value)
+        );
 
-        // если форма невалидна — блокируем сохранение
         if (modalSaveBtn) {
-            modalSaveBtn.disabled = !(nameOk && urlOk);
-    }
+            modalSaveBtn.disabled = !(nameOk && urlOk && priceOk && stockOk);
+        }
     }
 
     if (modalNameInput) {
@@ -256,6 +264,30 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCounter(modalImageUrlInput, urlCounter, 400);
         validateModalFormLive();
     });
+    }
+
+    if (modalPriceInput && priceCounter) {
+        modalPriceInput.addEventListener('input', () => {
+            if (modalPriceInput.value.length > PRICE_STOCK_MAX) {
+                modalPriceInput.value = modalPriceInput.value.slice(0, PRICE_STOCK_MAX);
+            }
+
+            updateCounter(modalPriceInput, priceCounter, PRICE_STOCK_MAX);
+            validateModalFormLive();
+        });
+    }
+
+    if (modalStockInput && stockCounter) {
+        modalStockInput.addEventListener('input', () => {
+            modalStockInput.value = modalStockInput.value.replace(/\D/g, '');
+
+            if (modalStockInput.value.length > PRICE_STOCK_MAX) {
+                modalStockInput.value = modalStockInput.value.slice(0, PRICE_STOCK_MAX);
+            }
+
+        updateCounter(modalStockInput, stockCounter, PRICE_STOCK_MAX);
+        validateModalFormLive();
+        });
     }
 
     function formatAction(action) {
@@ -808,6 +840,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateCounter(modalNameInput, nameCounter, 120);
         if (modalImageUrlInput) updateCounter(modalImageUrlInput, urlCounter, 400);
+        if (modalPriceInput) updateCounter(modalPriceInput, priceCounter, PRICE_STOCK_MAX);
+        if (modalStockInput) updateCounter(modalStockInput, stockCounter, PRICE_STOCK_MAX);
         validateModalFormLive();
 
         if (data.image_url) {
@@ -844,6 +878,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Счётчики лимита символов нужны только в режиме редактирования
         if (nameCounter) nameCounter.style.display = isViewOnly ? 'none' : '';
         if (urlCounter) urlCounter.style.display = isViewOnly ? 'none' : '';
+        if (priceCounter) priceCounter.style.display = isViewOnly ? 'none' : '';
+        if (stockCounter) stockCounter.style.display = isViewOnly ? 'none' : '';
 
         // Кнопки
         if (isViewOnly) {
@@ -1251,12 +1287,14 @@ document.addEventListener('keydown', (e) => {
 
         updateCounter(modalNameInput, nameCounter, 120);
         if (modalImageUrlInput) updateCounter(modalImageUrlInput, urlCounter, 400);
-
+        if (modalPriceInput) updateCounter(modalPriceInput, priceCounter, PRICE_STOCK_MAX);
+        if (modalStockInput) updateCounter(modalStockInput, stockCounter, PRICE_STOCK_MAX);
         if (nameCounter) nameCounter.style.display = '';
         if (urlCounter) urlCounter.style.display = '';
+        if (priceCounter) priceCounter.style.display = '';
+        if (stockCounter) stockCounter.style.display = '';
 
         validateModalFormLive();
-
         applyRoleToModal();
 
         if (modalHistoryBtn) modalHistoryBtn.style.display = 'none';
@@ -1274,6 +1312,7 @@ document.addEventListener('keydown', (e) => {
     const offerVal = modalOfferIdInput.value.trim();
     const productIdVal = modalProductIdInput.value.trim();
     const imageUrlVal = modalImageUrlInput.value.trim();
+    const priceValRaw = modalPriceInput ? modalPriceInput.value.trim() : "";
     const stockValRaw = modalStockInput ? modalStockInput.value.trim() : "";
 
     if (nameVal.length === 0) {
@@ -1296,22 +1335,36 @@ document.addEventListener('keydown', (e) => {
         showModalError('URL изображения слишком длинный. Максимум 400 символов.');
         return;
     }
-    if (stockValRaw.length > 0) {
-        const n = Number(stockValRaw);
-    if (!Number.isInteger(n) || n < 0) {
-        showModalError('Остаток должен быть целым числом (0 или больше).');
+    if (priceValRaw.length > PRICE_STOCK_MAX) {
+        showModalError('Цена слишком длинная. Максимум 15 символов.');
         return;
     }
+
+    if (stockValRaw.length > PRICE_STOCK_MAX) {
+        showModalError('Остаток слишком длинный. Максимум 15 символов.');
+        return;
+    }
+
+    if (stockValRaw.length > 0 && !/^\d+$/.test(stockValRaw)) {
+        showModalError('Остаток должен быть целым числом (0 или больше).');
+        eturn;
+    }
+
+    if (stockValRaw.length > 0) {
+        const n = Number(stockValRaw);
+
+        if (!Number.isInteger(n) || n < 0) {
+            showModalError('Остаток должен быть целым числом (0 или больше).');
+            return;
+        }
     }
 
     const payload = {
         name: modalNameInput.value.trim(),
         offer_id: modalOfferIdInput.value.trim() || null,
         product_id: modalProductIdInput.value.trim() || null,
-        price: modalPriceInput.value !== '' ? parseFloat(modalPriceInput.value) : null,
-        stock: (modalStockInput && modalStockInput.value !== '')
-            ? parseInt(modalStockInput.value, 10)
-            : null,
+        price: priceValRaw !== '' ? parseFloat(priceValRaw) : null,
+        stock: stockValRaw !== '' ? parseInt(stockValRaw, 10) : null,
         image_url: modalImageUrlInput.value.trim() || null,
     };
 

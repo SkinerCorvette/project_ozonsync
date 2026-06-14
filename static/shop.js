@@ -446,6 +446,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ordersBody.innerHTML = orders.map(order => {
                 const paymentStatus = order.payment_status || 'pending';
                 const paymentMethod = order.payment_method || 'test_card';
+                const isOrderLocked = ['completed', 'cancelled'].includes(order.status);
+                const isPaymentLocked = paymentStatus === 'paid';
                 const canPay = !adminMode
                     && paymentMethod === 'test_card'
                     && ['pending', 'failed'].includes(paymentStatus)
@@ -484,17 +486,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${adminMode ? `
                         <div class="order-admin-actions order-admin-actions-modern">
                             <label>Статус заказа
-                                <select class="order-status-select">
+                                <select class="order-status-select" ${isOrderLocked ? 'disabled' : ''}>
                                     ${Object.entries(statusMap).map(([value, label]) => `<option value="${value}" ${value === order.status ? 'selected' : ''}>${label}</option>`).join('')}
                                 </select>
                             </label>
                             <label>Статус оплаты
-                                <select class="payment-status-select">
+                                <select class="payment-status-select" ${isPaymentLocked ? 'disabled' : ''}>
                                     ${Object.entries(paymentStatusMap).map(([value, label]) => `<option value="${value}" ${value === paymentStatus ? 'selected' : ''}>${label}</option>`).join('')}
                                 </select>
                             </label>
                             <button class="save-order-status-btn" type="button">Сохранить заказ</button>
-                            <button class="secondary-btn save-payment-status-btn" type="button">Сохранить оплату</button>
                         </div>
                     ` : `
                         <div class="order-user-actions order-user-actions-modern">
@@ -1140,46 +1141,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (ordersBody) {
-        ordersBody.addEventListener('click', async (e) => {
-            const saveBtn = e.target.closest('.save-order-status-btn');
-            const savePaymentBtn = e.target.closest('.save-payment-status-btn');
-            const cancelBtn = e.target.closest('.cancel-order-btn');
-            const payBtn = e.target.closest('.pay-order-btn');
+        if (ordersBody) {
+            ordersBody.addEventListener('click', async (e) => {
+                const saveBtn = e.target.closest('.save-order-status-btn');
+                const cancelBtn = e.target.closest('.cancel-order-btn');
+                const payBtn = e.target.closest('.pay-order-btn');
 
-            if (saveBtn) {
-                const card = saveBtn.closest('.order-card');
-                const select = card.querySelector('.order-status-select');
-                try {
-                    await api(`/api/orders/${card.dataset.orderId}/status`, {
-                        method: 'PUT',
-                        body: JSON.stringify({ status: select.value })
-                    });
-                    await loadOrders(true);
-                    await loadMainDashboard();
-                    toast('Статус заказа обновлён.', 'success');
-                } catch (err) {
-                    toast(err.message, 'error');
-                }
-                return;
-            }
+                if (saveBtn) {
+                    const card = saveBtn.closest('.order-card');
+                    const orderSelect = card.querySelector('.order-status-select');
+                    const paymentSelect = card.querySelector('.payment-status-select');
 
-            if (savePaymentBtn) {
-                const card = savePaymentBtn.closest('.order-card');
-                const paymentSelect = card.querySelector('.payment-status-select');
-                try {
-                    await api(`/api/orders/${card.dataset.orderId}/payment_status`, {
-                        method: 'PUT',
-                        body: JSON.stringify({ payment_status: paymentSelect.value })
-                    });
-                    await loadOrders(true);
-                    await loadMainDashboard();
-                    toast('Статус оплаты обновлён.', 'success');
-                } catch (err) {
-                    toast(err.message, 'error');
-                }
-                return;
-            }
+                    try {
+                        await api(`/api/orders/${card.dataset.orderId}/admin_update`, {
+                            method: 'PUT',
+                            body: JSON.stringify({
+                                status: orderSelect.value,
+                                payment_status: paymentSelect.value
+                            })
+                        });
+
+                        await loadOrders(true);
+                        await loadMainDashboard();
+                        toast('Заказ обновлён.', 'success');
+                    } catch (err) {
+                        toast(err.message, 'error');
+                    }
+
+                    return;
+        }
 
             if (payBtn) {
                 const card = payBtn.closest('.order-card');
