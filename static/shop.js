@@ -447,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const paymentStatus = order.payment_status || 'pending';
                 const paymentMethod = order.payment_method || 'test_card';
                 const isOrderLocked = ['completed', 'cancelled'].includes(order.status);
-                const isPaymentLocked = paymentStatus === 'paid';
+                const isPaymentLocked = paymentStatus === 'paid' || order.status === 'cancelled';
                 const canPay = !adminMode
                     && paymentMethod === 'test_card'
                     && ['pending', 'failed'].includes(paymentStatus)

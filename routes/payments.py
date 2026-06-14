@@ -138,6 +138,9 @@ def update_payment_status(order_id):
     
     if old_status == 'paid' and new_status != old_status:
         return jsonify({"message": "Нельзя изменить статус оплаты уже оплаченного заказа."}), 400
+    
+    if order.status == 'cancelled' and new_status != old_status:
+        return jsonify({"message": "Нельзя изменить статус оплаты отменённого заказа."}), 400
 
     order.payment_status = new_status
     order.payment_method = new_method
